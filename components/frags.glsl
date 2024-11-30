@@ -14,7 +14,15 @@
         if(strgt2 > 0.5){strgt2 = 1.0;}
         else
         {
-          strgt2 = strgt2/(vUv.x*0.5);
+          if(strgt2 > 0.1 && strgt2 < 0.14)
+          {
+            strgt2 = 15.0;
+          }
+          else
+          {
+            strgt2 = 1.0;
+          }
+          // strgt2 = strgt2/(vUv.x*0.5);
         }
         
         // vec4 mixedColor = mix(texColor,0.5,sin(utime));

@@ -98,9 +98,13 @@ export function Model2(props) {
           {
             horizontalRotationNegative.current = false
           }
-          else if(args == 'SHOT')
-          { console.log("ici")
-            shootBullet.current = true
+          else if(args == 'LASER-START')
+          { 
+            laserRef.current.material.visible = true;
+          }
+          else if(args == 'LASER-END')
+          { 
+            laserRef.current.material.visible = false;
           }
         }
     },[])
@@ -286,7 +290,7 @@ export function Model2(props) {
     <mesh  ref={cilRef2} onAfterRender={clirefFunc2} geometry={nodes.laserBase.geometry}  position={[0,0,15]}>
         <meshBasicMaterial color={'blue'} wireframe />  
         <mesh name='laserFire' ref={laserRef} geometry={nodes.laser2.geometry} material={nodes.laser.material}>
-            <shaderMaterial transparent vertexShader={laserVertex} fragmentShader={laserFrags} uniforms={{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
+            <shaderMaterial visible={false} transparent vertexShader={laserVertex} fragmentShader={laserFrags} uniforms={{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
             utexture:{value:txt}, intersectPoint:{value:new THREE.Vector3(0,0,0)} }} />
         </mesh>
         {/* <mesh  name='laserFire' ref={laserRef}>
