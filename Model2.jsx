@@ -128,8 +128,8 @@ export function Model2(props) {
                   zAngle.current = Math.round(zAngle.current *100)/100
 
 
-                  cilRef2.current.lookAt(new THREE.Vector3(15,yAngle.current,15+zAngle.current))
-                  cilRef3.current.lookAt(new THREE.Vector3(15,yAngle.current,15+zAngle.current))
+                  cilRef2.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
+                  cilRef3.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
 
                   rayDirection.current.z = (zAngle.current/wallRef.current.position.x);
                   rayDirection.current.z = Math.round(rayDirection.current.z *100)/100
@@ -154,8 +154,8 @@ export function Model2(props) {
                     zAngle.current -= rotationSpeed
                     zAngle.current = Math.round(zAngle.current *100)/100;
   
-                    cilRef2.current.lookAt(new THREE.Vector3(15,yAngle.current,15+zAngle.current))
-                    cilRef3.current.lookAt(new THREE.Vector3(15,yAngle.current,15+zAngle.current))
+                    cilRef2.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
+                    cilRef3.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
   
                     rayDirection.current.z = (zAngle.current/wallRef.current.position.x);
                     rayDirection.current.z = Math.round(rayDirection.current.z *100)/100
@@ -179,8 +179,8 @@ export function Model2(props) {
                       yAngle.current += rotationSpeed
                       yAngle.current = Math.round(yAngle.current *100)/100
     
-                      cilRef2.current.lookAt(new THREE.Vector3(15,yAngle.current,15+zAngle.current))
-                      cilRef3.current.lookAt(new THREE.Vector3(15,yAngle.current,15+zAngle.current))
+                      cilRef2.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
+                      cilRef3.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
 
                       rayDirection.current.y = (yAngle.current/wallRef.current.position.x);
                       rayDirection.current.y = Math.round(rayDirection.current.y *100)/100
@@ -205,8 +205,8 @@ export function Model2(props) {
                         yAngle.current = Math.round(yAngle.current *100)/100
 
       
-                        cilRef2.current.lookAt(new THREE.Vector3(15,yAngle.current,15+zAngle.current))
-                        cilRef3.current.lookAt(new THREE.Vector3(15,yAngle.current,15+zAngle.current))
+                        cilRef2.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
+                        cilRef3.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
 
                         rayDirection.current.y = (yAngle.current/wallRef.current.position.x);
                         rayDirection.current.y = Math.round(rayDirection.current.y *100)/100
@@ -261,7 +261,7 @@ export function Model2(props) {
           if(!setOnce2.current)
           {
             setOnce2.current = true
-            cilRef2.current.lookAt(new THREE.Vector3(15,0,15))
+            cilRef2.current.lookAt(new THREE.Vector3(25,0,15))
           }
           
         }
@@ -270,7 +270,7 @@ export function Model2(props) {
             if(!setOnce3.current)
             {
               setOnce3.current = true
-              cilRef3.current.lookAt(new THREE.Vector3(15,0,15))
+              cilRef3.current.lookAt(new THREE.Vector3(25,0,15))
             }
             
           }
