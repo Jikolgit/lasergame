@@ -303,11 +303,11 @@ export function Model2(props) {
         </sprite>
 
     </mesh>
-    <mesh name='wall' onAfterRender={setRay} ref={wallRef}  geometry={nodes.wall.geometry} rotation={[0, 0,(90 * Math.PI) / 180]} position={[15, 0, 15]}>
+    <mesh name='wall' onAfterRender={setRay} ref={wallRef}  geometry={nodes.wall.geometry} rotation={[0, 0,(90 * Math.PI) / 180]} position={[25, 0, 15]}>
             <shaderMaterial transparent vertexShader={vertex} fragmentShader={frags} uniforms={{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
                                                                                 utexture:{value:txt}, uline:{value:new THREE.Vector2(0,0)} }} />
     </mesh>
-    <mesh name='minerais' ref={res} position={[15,5,5]}>
+    <mesh name='minerais' ref={res} position={[25,5,5]}>
           <boxGeometry args={[2,2,2]} />
           <meshBasicMaterial color={'white'} />
     </mesh>
