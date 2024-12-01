@@ -30,17 +30,22 @@ export function Model2(props) {
   let verticalRotationNegative = useRef(false)
   let horizontalRotationNegative = useRef(false)
   let shootBullet = useRef(false)
+  let laserShotStart = useRef(false);
   let setOnce = useRef(false)
   let setOnce2 = useRef(false)
   let setOnce3 = useRef(false)
   let wallRef = useRef(null);
+  let laserTarget = useRef({name:"none",obj:null})
   let res = useRef(null);
+  let heatAnimation = useRef(false)
+  let objectToAnimate = useRef([{animate:false,ref:res}]);
   let sprite0Ref = useRef()
   let cilRef2 = useRef();
   let cilRef3 = useRef();
   let xAngle = useRef(15)
   let yAngle = useRef(0)
   let zAngle = useRef(0)
+  let redColorLevel = useRef(0)
   let laserRef = useRef();
   let _scale = 1;
   let rotationSpeed = 1/5
@@ -52,6 +57,52 @@ export function Model2(props) {
   ]
 
   const positions = new Float32Array(points.flat())
+  let eventKeyPressManager = (evt)=>
+    {
+      if(evt.key == 'ArrowLeft')
+      {
+        appContext.ModelController.current('ENABLE-HORIZONTAL-ROTATION--')
+      }
+      else if(evt.key == 'ArrowRight')
+      { 
+        appContext.ModelController.current('ENABLE-HORIZONTAL-ROTATION-+')
+      }
+      else if(evt.key == 'ArrowUp')
+      { 
+        appContext.ModelController.current('ENABLE-VERTICAL-ROTATION-+')
+      }
+      else if(evt.key == 'ArrowDown')
+      { 
+        appContext.ModelController.current('ENABLE-VERTICAL-ROTATION--')
+      }
+      else if(evt.key == ' ')
+      { 
+        appContext.ModelController.current('LASER-START')
+      }
+    }
+  let eventKeyUpManager = (evt)=>
+    {
+      if(evt.key == 'ArrowLeft')
+      {
+        appContext.ModelController.current('DISABLE-HORIZONTAL-ROTATION--')
+      }
+      else if(evt.key == 'ArrowRight')
+      {
+        appContext.ModelController.current('DISABLE-HORIZONTAL-ROTATION-+')
+      }
+      else if(evt.key == 'ArrowUp')
+      { 
+        appContext.ModelController.current('DISABLE-VERTICAL-ROTATION-+')
+      }
+      else if(evt.key == 'ArrowDown')
+      { 
+        appContext.ModelController.current('DISABLE-VERTICAL-ROTATION--')
+      }
+      else if(evt.key == ' ')
+      { 
+        appContext.ModelController.current('LASER-END')
+      }
+    }
   useEffect(()=>
     {
       appContext.RayCastController.current = (args)=>
@@ -63,6 +114,8 @@ export function Model2(props) {
         // let intersection = rayCaster.intersectObject(wallRef.current)
         // console.log(intersection)
       }
+      window.addEventListener('keydown',eventKeyPressManager)
+      window.addEventListener('keyup',eventKeyUpManager)
       appContext.ModelController.current = (args)=>
         {
           if(args == 'ENABLE-VERTICAL-ROTATION-+')
@@ -100,18 +153,80 @@ export function Model2(props) {
           }
           else if(args == 'LASER-START')
           { 
+            if(laserTarget.current.name == 'minerais')
+            {
+              objectToAnimate.current[0].animate = true;
+            }
             laserRef.current.material.visible = true;
+            laserShotStart.current= true
           }
           else if(args == 'LASER-END')
           { 
+            if(laserTarget.current.name == 'minerais')
+            {
+              objectToAnimate.current[0].animate = false;
+            }
+            
             laserRef.current.material.visible = false;
+            laserShotStart.current= false
           }
         }
     },[])
+  let resShotEffect = ()=>
+  {
+    if(laserTarget.current.name=='minerais')
+    {
+        if(laserShotStart.current)
+        { 
+          heatAnimation.current = true
+
+        }
+        else
+        {
+          
+          heatAnimation.current = false
+
+        }
+    }
+
+  }
   useFrame(()=>
     {
 
-      laserRef.current.material.uniforms.utime.value += 0.05;
+            resShotEffect()
+            if(heatAnimation.current)
+            { 
+              for(let i = 0; i<objectToAnimate.current.length;i++)
+              {
+                if(objectToAnimate.current[i].animate)
+                {
+                    if(redColorLevel.current<1)
+                    {
+                      redColorLevel.current += 1/50 
+                      objectToAnimate.current[i].ref.current.material.opacity = redColorLevel.current
+                    }
+                }
+
+              }
+              
+            }
+            else
+            {
+              for(let i = 0; i<objectToAnimate.current.length;i++)
+              {
+                  if(redColorLevel.current>0)
+                  {
+                    redColorLevel.current -= 1/50 
+                    objectToAnimate.current[i].ref.current.material.opacity = redColorLevel.current
+                  }
+                  else
+                  {
+                    objectToAnimate.current[i].animate = false
+                  }
+              }
+             
+            }
+            laserRef.current.material.uniforms.utime.value += 0.05;
             if(shootBullet.current)
               { 
 
@@ -247,12 +362,20 @@ export function Model2(props) {
       {
         if(intersect[0].object.name == 'minerais')
         {
-          res.current.material.color = new THREE.Color(0,0,1);
+         
+          laserTarget.current.name = 'minerais'
+          laserTarget.current.obj = intersect[0].object;
+          res.current.parent.material.color = new THREE.Color(0,0,1);
+          wallRef.current.material.uniforms.cursorVisible.value = 1.0
           laserRef.current.material.uniforms.intersectPoint.value = new THREE.Vector3(intersect[0].point.x,intersect[0].point.y,intersect[0].distance)
         }
         else
         {
-          res.current.material.color = new THREE.Color(1,1,1);
+          heatAnimation.current = false;
+          laserTarget.current.name = 'none'
+          laserTarget.current.obj = null
+          res.current.parent.material.color = new THREE.Color(1,1,1);
+          wallRef.current.material.uniforms.cursorVisible.value = 15.0
           wallRef.current.material.uniforms.uline.value = new THREE.Vector2(intersect[0].uv.x,intersect[0].uv.y)
           laserRef.current.material.uniforms.intersectPoint.value = new THREE.Vector3(intersect[0].point.x,intersect[0].point.y,intersect[0].distance)
         }
@@ -309,11 +432,15 @@ export function Model2(props) {
     </mesh>
     <mesh name='wall' onAfterRender={setRay} ref={wallRef}  geometry={nodes.wall.geometry} rotation={[0, 0,(90 * Math.PI) / 180]} position={[25, 0, 15]}>
             <shaderMaterial transparent vertexShader={vertex} fragmentShader={frags} uniforms={{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
-                                                                                utexture:{value:txt}, uline:{value:new THREE.Vector2(0,0)} }} />
+                                                                                utexture:{value:txt},cursorVisible:{value:15.0} ,uline:{value:new THREE.Vector2(0,0)} }} />
     </mesh>
-    <mesh name='minerais' ref={res} position={[25,5,5]}>
+    <mesh name='parentMinerais'   position={[25,5,5]}>
           <boxGeometry args={[2,2,2]} />
           <meshBasicMaterial color={'white'} />
+          <mesh name='minerais' ref={res}  scale={1.1}>
+                <boxGeometry args={[2,2,2]} />
+                <meshBasicMaterial color={'red'} transparent={true} opacity={0} />
+          </mesh>
     </mesh>
 
     

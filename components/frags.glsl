@@ -2,6 +2,7 @@
     uniform float utime;
     uniform vec3 uColor;
     uniform vec2 uline;
+    uniform float cursorVisible;
     uniform sampler2D utexture;
     varying vec2 vUv;
 
@@ -16,7 +17,7 @@
         {
           if(strgt2 > 0.1 && strgt2 < 0.14)
           {
-            strgt2 = 15.0;
+            strgt2 = cursorVisible;
           }
           else
           {
