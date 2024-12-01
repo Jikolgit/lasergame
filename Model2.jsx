@@ -12,6 +12,7 @@ import vertex from './components/vertex.glsl'
 import frags from './components/frags.glsl'
 import laserVertex from './components/laserShaders/laserVertex.glsl'
 import laserFrags from './components/laserShaders/laserFrags.glsl'
+import { AudioManage } from './components/audioComponents';
 
 export function Model2(props) {
   const appContext = useContext(AppContext);
@@ -34,19 +35,25 @@ export function Model2(props) {
   let setOnce = useRef(false)
   let setOnce2 = useRef(false)
   let setOnce3 = useRef(false)
+  let laserButtonSetOnceRef = useRef(false)
   let wallRef = useRef(null);
-  let laserTarget = useRef({name:"none",obj:null})
-  let res = useRef(null);
-  let heatAnimation = useRef(false)
-  let objectToAnimate = useRef([{animate:false,ref:res}]);
+  let laserTarget = useRef({name:"none",index:null})
+  let resRefArr = useRef([]);
+  let resGroup = useRef(null);
+  let heatAnimation = useRef(false);
+  let totalResOnMap = useRef([{name:'minerais1',index:0,animate:false,redColorSpeed:1/200,redColorLevel:0},
+                              {name:'minerais2',index:1,animate:false,redColorSpeed:1/200,redColorLevel:0},
+                              {name:'minerais3',index:2,animate:false,redColorSpeed:1/200,redColorLevel:0}]);
   let sprite0Ref = useRef()
   let cilRef2 = useRef();
   let cilRef3 = useRef();
   let xAngle = useRef(15)
   let yAngle = useRef(0)
   let zAngle = useRef(0)
-  let redColorLevel = useRef(0)
+  let redColorSpeed = 1/200
   let laserRef = useRef();
+  let laserStartButton = useRef(false)
+  let rotateStartButton = useRef(false)
   let _scale = 1;
   let rotationSpeed = 1/5
 
@@ -57,6 +64,19 @@ export function Model2(props) {
   ]
 
   const positions = new Float32Array(points.flat())
+  let rotateOnceFunc = ()=>
+    {
+        if(!rotateStartButton.current)
+        {
+          rotateStartButton.current = true;
+          AudioManage.play('rotate-start')
+        } 
+    }
+  let rotateEnd = ()=>
+    {
+      AudioManage.play('rotate-stop')
+      rotateStartButton.current = false;
+    }
   let eventKeyPressManager = (evt)=>
     {
       if(evt.key == 'ArrowLeft')
@@ -103,6 +123,14 @@ export function Model2(props) {
         appContext.ModelController.current('LASER-END')
       }
     }
+  let laserButtonSetOnce = ()=>
+    {
+        if(!laserButtonSetOnceRef.current)
+        {
+          laserButtonSetOnceRef.current = true;
+          AudioManage.play('laser-shoot')
+        }
+    }
   useEffect(()=>
     {
       appContext.RayCastController.current = (args)=>
@@ -119,62 +147,54 @@ export function Model2(props) {
       appContext.ModelController.current = (args)=>
         {
           if(args == 'ENABLE-VERTICAL-ROTATION-+')
-          {
+          { rotateOnceFunc()
             verticalRotationPositive.current = true
           }
           else if(args == 'DISABLE-VERTICAL-ROTATION-+')
-          {
+          { rotateEnd()
             verticalRotationPositive.current = false
           }
           else if(args == 'ENABLE-HORIZONTAL-ROTATION-+')
-          {
+          { rotateOnceFunc()
             horizontalRotationPositive.current = true
           }
           else if(args == 'DISABLE-HORIZONTAL-ROTATION-+')
-          {
+          { rotateEnd()
             horizontalRotationPositive.current = false
           }
 
           else if(args == 'ENABLE-VERTICAL-ROTATION--')
-          {
+          { rotateOnceFunc()
             verticalRotationNegative.current = true
           }
           else if(args == 'DISABLE-VERTICAL-ROTATION--')
-          {
+          { rotateEnd()
             verticalRotationNegative.current = false
           }
           else if(args == 'ENABLE-HORIZONTAL-ROTATION--')
-          {
+          { rotateOnceFunc()
             horizontalRotationNegative.current = true
           }
           else if(args == 'DISABLE-HORIZONTAL-ROTATION--')
-          {
+          { rotateEnd()
             horizontalRotationNegative.current = false
           }
           else if(args == 'LASER-START')
-          { 
-            if(laserTarget.current.name == 'minerais')
-            {
-              objectToAnimate.current[0].animate = true;
-            }
-            laserRef.current.material.visible = true;
-            laserShotStart.current= true
+          {   
+            laserButtonSetOnce()
+            laserStartButton.current = true;
           }
           else if(args == 'LASER-END')
           { 
-            if(laserTarget.current.name == 'minerais')
-            {
-              objectToAnimate.current[0].animate = false;
-            }
-            
-            laserRef.current.material.visible = false;
-            laserShotStart.current= false
+            AudioManage.play('laser-shoot-stop')
+            laserButtonSetOnceRef.current = false;
+            laserStartButton.current = false;
           }
         }
     },[])
   let resShotEffect = ()=>
   {
-    if(laserTarget.current.name=='minerais')
+    if(laserTarget.current.name !='none')
     {
         if(laserShotStart.current)
         { 
@@ -193,39 +213,69 @@ export function Model2(props) {
   useFrame(()=>
     {
 
-            resShotEffect()
-            if(heatAnimation.current)
-            { 
-              for(let i = 0; i<objectToAnimate.current.length;i++)
-              {
-                if(objectToAnimate.current[i].animate)
+            if(laserStartButton.current)
+            {
+                if(laserTarget.current.name != 'none')
+                { 
+                  totalResOnMap.current[laserTarget.current.index].animate = true;
+                }
+                laserRef.current.material.visible = true;
+                laserShotStart.current= true
+            }
+            else
+            {   
+                if(laserTarget.current.name != 'none')
                 {
-                    if(redColorLevel.current<1)
+                  totalResOnMap.current[laserTarget.current.index].animate = false;
+                }
+                laserRef.current.material.visible = false;
+                laserShotStart.current= false
+            }
+            // resShotEffect()
+            // if(heatAnimation.current)
+            // { 
+              for(let i = 0; i<totalResOnMap.current.length;i++)
+              { 
+                if(totalResOnMap.current[i].animate)
+                {     
+                    if(totalResOnMap.current[i].redColorLevel<1)
+                    { 
+                      totalResOnMap.current[i].redColorLevel += redColorSpeed 
+                      resRefArr.current[i].material.opacity = totalResOnMap.current[i].redColorLevel
+                    }
+                }
+                else
+                {
+                    if(totalResOnMap.current[i].redColorLevel>0)
                     {
-                      redColorLevel.current += 1/50 
-                      objectToAnimate.current[i].ref.current.material.opacity = redColorLevel.current
+                      totalResOnMap.current[i].redColorLevel -= redColorSpeed 
+                      resRefArr.current[i].material.opacity = totalResOnMap.current[i].redColorLevel
+                    }
+                    else
+                    {
+                      totalResOnMap.current[i].animate = false;
                     }
                 }
 
               }
               
-            }
-            else
-            {
-              for(let i = 0; i<objectToAnimate.current.length;i++)
-              {
-                  if(redColorLevel.current>0)
-                  {
-                    redColorLevel.current -= 1/50 
-                    objectToAnimate.current[i].ref.current.material.opacity = redColorLevel.current
-                  }
-                  else
-                  {
-                    objectToAnimate.current[i].animate = false
-                  }
-              }
+            // }
+            // else
+            // {
+              // for(let i = 0; i<totalResOnMap.current.length;i++)
+              // {
+              //     if(totalResOnMap.current[i].redColorLevel>0)
+              //     {
+              //       totalResOnMap.current[i].redColorLevel -= redColorSpeed 
+              //       resRefArr.current[i].material.opacity = totalResOnMap.current[i].redColorLevel
+              //     }
+              //     else
+              //     {
+              //       totalResOnMap.current[i].animate = false;
+              //     }
+              // }
              
-            }
+            // }
             laserRef.current.material.uniforms.utime.value += 0.05;
             if(shootBullet.current)
               { 
@@ -356,29 +406,66 @@ export function Model2(props) {
     }
   let setRay2 = ()=>
     {
-      let intersect = rayCaster.intersectObjects([wallRef.current,res.current])
+      let array1 = [wallRef.current]
+      
+      let array2 = array1.concat(resRefArr.current)
+      let intersect = rayCaster.intersectObjects(array2)
       
       if(intersect.length>0)
       {
-        if(intersect[0].object.name == 'minerais')
+        
+        if(intersect[0].object.name == 'wall')
         {
-         
-          laserTarget.current.name = 'minerais'
-          laserTarget.current.obj = intersect[0].object;
-          res.current.parent.material.color = new THREE.Color(0,0,1);
-          wallRef.current.material.uniforms.cursorVisible.value = 1.0
-          laserRef.current.material.uniforms.intersectPoint.value = new THREE.Vector3(intersect[0].point.x,intersect[0].point.y,intersect[0].distance)
+              heatAnimation.current = false;
+              if(laserTarget.current.index != null)
+              {
+                resRefArr.current[laserTarget.current.index].parent.material.color = new THREE.Color(1,1,1);
+                totalResOnMap.current[laserTarget.current.index].animate = false;
+              }
+              
+              laserTarget.current.name = 'none'
+              laserTarget.current.index = null
+              
+              wallRef.current.material.uniforms.cursorVisible.value = 15.0
+              wallRef.current.material.uniforms.uline.value = new THREE.Vector2(intersect[0].uv.x,intersect[0].uv.y)
+              laserRef.current.material.uniforms.intersectPoint.value = new THREE.Vector3(intersect[0].point.x,intersect[0].point.y,intersect[0].distance)
+
         }
         else
         {
-          heatAnimation.current = false;
-          laserTarget.current.name = 'none'
-          laserTarget.current.obj = null
-          res.current.parent.material.color = new THREE.Color(1,1,1);
-          wallRef.current.material.uniforms.cursorVisible.value = 15.0
-          wallRef.current.material.uniforms.uline.value = new THREE.Vector2(intersect[0].uv.x,intersect[0].uv.y)
-          laserRef.current.material.uniforms.intersectPoint.value = new THREE.Vector3(intersect[0].point.x,intersect[0].point.y,intersect[0].distance)
+          for(let i = 0; i<totalResOnMap.current.length;i++)
+          {
+            if(intersect[0].object.name == totalResOnMap.current[i].name)
+            { 
+              laserTarget.current.name = totalResOnMap.current[i].name
+              laserTarget.current.index = i
+              resRefArr.current[i].parent.material.color = new THREE.Color(0,0,1);
+              wallRef.current.material.uniforms.cursorVisible.value = 1.0
+              laserRef.current.material.uniforms.intersectPoint.value = new THREE.Vector3(intersect[0].point.x,intersect[0].point.y,intersect[0].distance);
+              break;
+            }
+          }
         }
+
+        // if(intersect[0].object.name == 'minerais1')
+        // {
+         
+        //   laserTarget.current.name = 'minerais1'
+        //   laserTarget.current.obj = intersect[0].object;
+        //   res.current.parent.material.color = new THREE.Color(0,0,1);
+        //   wallRef.current.material.uniforms.cursorVisible.value = 1.0
+        //   laserRef.current.material.uniforms.intersectPoint.value = new THREE.Vector3(intersect[0].point.x,intersect[0].point.y,intersect[0].distance)
+        // }
+        // else
+        // {
+        //   heatAnimation.current = false;
+        //   laserTarget.current.name = 'none'
+        //   laserTarget.current.obj = null
+        //   res.current.parent.material.color = new THREE.Color(1,1,1);
+        //   wallRef.current.material.uniforms.cursorVisible.value = 15.0
+        //   wallRef.current.material.uniforms.uline.value = new THREE.Vector2(intersect[0].uv.x,intersect[0].uv.y)
+        //   laserRef.current.material.uniforms.intersectPoint.value = new THREE.Vector3(intersect[0].point.x,intersect[0].point.y,intersect[0].distance)
+        // }
         
       }
       
@@ -434,14 +521,32 @@ export function Model2(props) {
             <shaderMaterial transparent vertexShader={vertex} fragmentShader={frags} uniforms={{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
                                                                                 utexture:{value:txt},cursorVisible:{value:15.0} ,uline:{value:new THREE.Vector2(0,0)} }} />
     </mesh>
-    <mesh name='parentMinerais'   position={[25,5,5]}>
-          <boxGeometry args={[2,2,2]} />
-          <meshBasicMaterial color={'white'} />
-          <mesh name='minerais' ref={res}  scale={1.1}>
-                <boxGeometry args={[2,2,2]} />
-                <meshBasicMaterial color={'red'} transparent={true} opacity={0} />
-          </mesh>
-    </mesh>
+    <group ref={resGroup}>
+            <mesh name='parentMinerais'   position={[25,5,5]}>
+                  <boxGeometry args={[2,2,2]} />
+                  <meshBasicMaterial color={'white'} />
+                  <mesh name='minerais1' ref={(ref)=>{resRefArr.current[0]=ref}}  scale={1.1}>
+                        <boxGeometry args={[2,2,2]} />
+                        <meshBasicMaterial color={'red'} transparent={true} opacity={0} />
+                  </mesh>
+            </mesh>
+            <mesh name='parentMinerais2' position={[25,5,15]}>
+                  <boxGeometry args={[2,2,2]} />
+                  <meshBasicMaterial color={'white'} />
+                  <mesh name='minerais2' ref={(refVal)=>{resRefArr.current[1]=refVal}}  scale={1.1}>
+                        <boxGeometry args={[2,2,2]} />
+                        <meshBasicMaterial color={'red'} transparent={true} opacity={0} />
+                  </mesh>
+            </mesh>
+            <mesh name='parentMinerais3' position={[25,0,20]}>
+                  <boxGeometry args={[2,2,2]} />
+                  <meshBasicMaterial color={'white'} />
+                  <mesh name='minerais3' ref={(ref)=>{resRefArr.current[2]=ref}}  scale={1.1}>
+                        <boxGeometry args={[2,2,2]} />
+                        <meshBasicMaterial color={'red'} transparent={true} opacity={0} />
+                  </mesh>
+            </mesh>
+    </group>
 
     
     </>
