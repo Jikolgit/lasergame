@@ -30,7 +30,12 @@ export function GameApp()
                          <Model2 />
                         {/* <RayCastTest /> */}
                         <PerspectiveCamera position={[-15,12,15]} makeDefault />
-                        <OrbitControls target={[15,0,15]} />
+                        <OrbitControls 
+                        maxAzimuthAngle={(5*Math.PI)/180} 
+                        minAzimuthAngle={(180*Math.PI)/180} 
+                        minPolarAngle={(45*Math.PI)/180} 
+                        maxPolarAngle={(90*Math.PI)/180} 
+                        enableDamping={true} enablePan={false} enableRotate={true} enableZoom={false} target={[15,0,15]} />
                 </GameAppContext.Provider>
             </>
     )
