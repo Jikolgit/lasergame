@@ -10,17 +10,16 @@ export function Model(props) {
   const { nodes, materials } = useGLTF('/model.glb')
   return (
     <group {...props} dispose={null}>
-      <mesh geometry={nodes.gear2.geometry} material={nodes.gear2.material} position={[-2.949, -1.39, 0.01]} />
-      <mesh geometry={nodes.wall.geometry} material={nodes.wall.material} position={[14.538, 0.51, 0.9]} rotation={[0, 1.571, 0]} />
-      <mesh geometry={nodes.gear1.geometry} material={nodes.gear1.material} position={[-2.949, -0.39, -0.59]} rotation={[Math.PI / 2, 0, 0]} />
-      <mesh geometry={nodes.testc3.geometry} material={nodes.testc3.material} position={[-5.479, 0, -18]} />
-      <mesh geometry={nodes.testc4.geometry} material={nodes.testc4.material} position={[-5.479, 0, -18]} />
-      <mesh geometry={nodes.laserBase.geometry} material={nodes.laserBase.material} position={[-0.002, -0.445, 9.604]}>
-        <mesh geometry={nodes.laser.geometry} material={nodes.laser.material} />
-        <mesh geometry={nodes.laser2.geometry} material={nodes.laser2.material} />
+      <mesh geometry={nodes.gear2.geometry} material={nodes.gear2.material} position={[-1.403, -5.943, 8.281]} rotation={[0, 0.293, 0]}>
+        <mesh geometry={nodes.gear2socle.geometry} material={nodes.gear2socle.material} position={[0.001, 3.383, -0.045]} rotation={[0, -0.293, 0]} />
       </mesh>
-      <mesh geometry={nodes.wall2.geometry} material={nodes.wall2.material} position={[29.988, 0.51, 16.35]} rotation={[-Math.PI, 0, -Math.PI]} />
-      <mesh geometry={nodes.wall3.geometry} material={nodes.wall3.material} position={[29.988, 0.51, -14.412]} rotation={[-Math.PI, 0, -Math.PI]} />
+      <mesh geometry={nodes.testc4.geometry} material={nodes.testc4.material} position={[-5.479, 0, -18]} />
+      <mesh geometry={nodes.laserBase.geometry} material={nodes.laserBase.material} position={[-0.002, -0.445, 7.498]}>
+        <mesh geometry={nodes.gear1.geometry} material={nodes.gear1.material} position={[1.581, 0.055, -0.011]} rotation={[Math.PI / 2, 0, 0]} />
+        <mesh geometry={nodes.laser.geometry} material={nodes.laser.material} position={[0, 0, 2.594]} />
+        <mesh geometry={nodes.laser2.geometry} material={nodes.laser2.material} position={[0, 0, 2.594]} />
+      </mesh>
+      <mesh geometry={nodes.wall.geometry} material={nodes.wall.material} position={[9.995, 0, 0]} rotation={[0, 0, Math.PI / 2]} />
     </group>
   )
 }

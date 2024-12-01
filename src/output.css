@@ -558,6 +558,10 @@ video {
   visibility: visible;
 }
 
+.static {
+  position: static;
+}
+
 .absolute {
   position: absolute;
 }
@@ -663,6 +667,10 @@ video {
 
 .font-times {
   font-family: Times New Toman;
+}
+
+.opacity-30 {
+  opacity: 0.3;
 }
 
 @media (max-width: 500px) {

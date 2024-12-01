@@ -40,6 +40,7 @@ export function Model2(props) {
   let laserTarget = useRef({name:"none",index:null})
   let resRefArr = useRef([]);
   let resGroup = useRef(null);
+  let ghorizontalGearRef = useRef(null);
   let heatAnimation = useRef(false);
   let totalResOnMap = useRef([{name:'minerais1',index:0,animate:false,redColorSpeed:1/200,redColorLevel:0},
                               {name:'minerais2',index:1,animate:false,redColorSpeed:1/200,redColorLevel:0},
@@ -231,9 +232,7 @@ export function Model2(props) {
                 laserRef.current.material.visible = false;
                 laserShotStart.current= false
             }
-            // resShotEffect()
-            // if(heatAnimation.current)
-            // { 
+
               for(let i = 0; i<totalResOnMap.current.length;i++)
               { 
                 if(totalResOnMap.current[i].animate)
@@ -259,23 +258,6 @@ export function Model2(props) {
 
               }
               
-            // }
-            // else
-            // {
-              // for(let i = 0; i<totalResOnMap.current.length;i++)
-              // {
-              //     if(totalResOnMap.current[i].redColorLevel>0)
-              //     {
-              //       totalResOnMap.current[i].redColorLevel -= redColorSpeed 
-              //       resRefArr.current[i].material.opacity = totalResOnMap.current[i].redColorLevel
-              //     }
-              //     else
-              //     {
-              //       totalResOnMap.current[i].animate = false;
-              //     }
-              // }
-             
-            // }
             laserRef.current.material.uniforms.utime.value += 0.05;
             if(shootBullet.current)
               { 
@@ -299,6 +281,7 @@ export function Model2(props) {
 
                   cilRef2.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
                   cilRef3.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
+                  ghorizontalGearRef.current.rotation.y -= 0.01
 
                   rayDirection.current.z = (zAngle.current/wallRef.current.position.x);
                   rayDirection.current.z = Math.round(rayDirection.current.z *100)/100
@@ -322,10 +305,10 @@ export function Model2(props) {
                     
                     zAngle.current -= rotationSpeed
                     zAngle.current = Math.round(zAngle.current *100)/100;
-  
+                    
                     cilRef2.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
                     cilRef3.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
-  
+                    ghorizontalGearRef.current.rotation.y += 0.01
                     rayDirection.current.z = (zAngle.current/wallRef.current.position.x);
                     rayDirection.current.z = Math.round(rayDirection.current.z *100)/100
                     
@@ -446,26 +429,6 @@ export function Model2(props) {
             }
           }
         }
-
-        // if(intersect[0].object.name == 'minerais1')
-        // {
-         
-        //   laserTarget.current.name = 'minerais1'
-        //   laserTarget.current.obj = intersect[0].object;
-        //   res.current.parent.material.color = new THREE.Color(0,0,1);
-        //   wallRef.current.material.uniforms.cursorVisible.value = 1.0
-        //   laserRef.current.material.uniforms.intersectPoint.value = new THREE.Vector3(intersect[0].point.x,intersect[0].point.y,intersect[0].distance)
-        // }
-        // else
-        // {
-        //   heatAnimation.current = false;
-        //   laserTarget.current.name = 'none'
-        //   laserTarget.current.obj = null
-        //   res.current.parent.material.color = new THREE.Color(1,1,1);
-        //   wallRef.current.material.uniforms.cursorVisible.value = 15.0
-        //   wallRef.current.material.uniforms.uline.value = new THREE.Vector2(intersect[0].uv.x,intersect[0].uv.y)
-        //   laserRef.current.material.uniforms.intersectPoint.value = new THREE.Vector3(intersect[0].point.x,intersect[0].point.y,intersect[0].distance)
-        // }
         
       }
       
@@ -476,6 +439,7 @@ export function Model2(props) {
           {
             setOnce2.current = true
             cilRef2.current.lookAt(new THREE.Vector3(25,0,15))
+            // ghorizontalGearRef.current.lookAt(new THREE.Vector3(0,0,15))
           }
           
         }
@@ -497,23 +461,45 @@ export function Model2(props) {
     <>
 
  
-    <mesh  ref={cilRef2} onAfterRender={clirefFunc2} geometry={nodes.laserBase.geometry}  position={[0,0,15]}>
-        <meshBasicMaterial color={'blue'} wireframe />  
+    {/* <mesh  ref={cilRef2} onAfterRender={clirefFunc2} geometry={nodes.laserBase.geometry}  position={[0,0,15]}>
+        <meshMatcapMaterial color={'blue'}/>  
         <mesh name='laserFire' ref={laserRef} geometry={nodes.laser2.geometry} material={nodes.laser.material}>
             <shaderMaterial visible={false} transparent vertexShader={laserVertex} fragmentShader={laserFrags} uniforms={{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
             utexture:{value:txt}, intersectPoint:{value:new THREE.Vector3(0,0,0)} }} />
         </mesh>
-        {/* <mesh  name='laserFire' ref={laserRef}>
-            <cylinderGeometry args={[2,2,10,10,1]}/>
-            <shaderMaterial transparent vertexShader={laserVertex} fragmentShader={laserFrags} uniforms={{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
-            utexture:{value:txt}, uline:{value:new THREE.Vector2(0,0)} }} />
-        </mesh> */}
+        <mesh geometry={nodes.gear1.geometry} material={nodes.gear1.material} position={[1.5, 0, 1.5]} rotation={[0,0, (0*Math.PI)/180]}>
+            <meshMatcapMaterial color={"red"} />
+        </mesh>
     </mesh>
-
+    <mesh geometry={nodes.gear2.geometry} material={nodes.gear2.material} position={[1, -5, 16.2]} rotation={[0,(109*Math.PI)/180,0]}>
+        <meshMatcapMaterial color={"red"} />
+        <mesh geometry={nodes.gear2socle.geometry} material={nodes.gear2socle.material} position={[0.001, 3.383, -0.045]} rotation={[0, -0.293, 0]}>
+        <meshMatcapMaterial color={"gray"} />
+        </mesh>
+    </mesh> */}
+        <mesh ref={ghorizontalGearRef} geometry={nodes.gear2.geometry} material={nodes.gear2.material} position={[0, -3, 16.4]} rotation={[0, (110*Math.PI)/180, 0]}>
+          <meshMatcapMaterial color={"red"} />
+          <mesh geometry={nodes.gear2socle.geometry} material={nodes.gear2socle.material} position={[0.001, 3.383, -0.045]} rotation={[0, -0.293, 0]}>
+          <meshMatcapMaterial color={"white"} />
+          </mesh>
+        </mesh>
+        
+        <mesh ref={cilRef2} onAfterRender={clirefFunc2} geometry={nodes.laserBase.geometry} material={nodes.laserBase.material} position={[0, 2, 15]} rotation={[0, -0.293, 0]}>
+              <meshMatcapMaterial color={"blue"} />
+              <mesh geometry={nodes.gear1.geometry} material={nodes.gear1.material} position={[1.581, 0.055, -0.011]} rotation={[Math.PI / 2, 0, 0]}>
+                    <meshMatcapMaterial color={"red"} />
+              </mesh>
+              <mesh visible={false} geometry={nodes.laser.geometry} material={nodes.laser.material} position={[0, 0, 2.594]} />
+              <mesh name='laserFire' ref={laserRef} geometry={nodes.laser2.geometry} material={nodes.laser2.material} position={[0, 0, 2.594]}>
+                      <shaderMaterial visible={false} transparent vertexShader={laserVertex} fragmentShader={laserFrags} uniforms={{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
+                    utexture:{value:txt}, intersectPoint:{value:new THREE.Vector3(0,0,0)} }} />
+              </mesh>
+        </mesh>
+    
     <mesh ref={cilRef3} onAfterRender={clirefFunc3} scale={1} geometry={nodes.testc4.geometry}  position={[0,0,15]} >
         <meshBasicMaterial color={'red'} wireframe />
         <sprite ref={sprite0Ref} scale={_scale} position={[0,0,-0.5]}>
-        <spriteMaterial color={'white'} />
+        <spriteMaterial color={'white'} transparent opacity={0.2} />
         </sprite>
 
     </mesh>

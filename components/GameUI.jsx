@@ -28,7 +28,7 @@ export function GameButton()
                             onTouchStart={()=>{appContext.ModelController.current('LASER-START')}} 
                             onTouchEnd={()=>{appContext.ModelController.current('LASER-END')}} 
                              
-                            className="w-[35px] h-[35px] bg-white "></div>
+                            className="w-[35px] h-[35px] bg-white opacity-30 "></div>
                         <div 
                             onTouchStart={()=>{appContext.ModelController.current('ENABLE-HORIZONTAL-ROTATION-+')}} 
                             onTouchEnd={()=>{appContext.ModelController.current('DISABLE-HORIZONTAL-ROTATION-+')}} 
