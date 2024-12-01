@@ -603,12 +603,8 @@ video {
   display: flex;
 }
 
-.h-\[25\] {
-  height: 25;
-}
-
-.h-\[25px\] {
-  height: 25px;
+.h-\[35px\] {
+  height: 35px;
 }
 
 .h-\[500px\] {
@@ -623,8 +619,8 @@ video {
   width: 150px;
 }
 
-.w-\[25px\] {
-  width: 25px;
+.w-\[35px\] {
+  width: 35px;
 }
 
 .w-full {
