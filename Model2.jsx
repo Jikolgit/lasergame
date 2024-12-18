@@ -18,6 +18,8 @@ export function Model2(props) {
   const appContext = useContext(AppContext);
   const gameAppContext = useContext(GameAppContext)
   const { nodes, materials } = useGLTF('/model.glb');
+  let laser1Txt = useTexture('texture1.jpg');
+  laser1Txt.flipY = false
   const horizontalGear = useRef(null)
   const verticalGear = useRef(null)
   let rayCaster = new THREE.Raycaster()
@@ -25,7 +27,7 @@ export function Model2(props) {
   let rayDirection = useRef(new THREE.Vector3(1,0,0).normalize())
   rayCaster.set(rayPosition.current,rayDirection.current)
 
-  let txt = useTexture('ntxt4.jpg')
+  let walltxt = useTexture('ntxt4.jpg')
   let verticalRotationPositive = useRef(false)
   let horizontalRotationPositive = useRef(false)
   let verticalRotationNegative = useRef(false)
@@ -51,12 +53,29 @@ export function Model2(props) {
   let xAngle = useRef(15)
   let yAngle = useRef(0)
   let zAngle = useRef(0)
+  let bulletXAngle = useRef(0)
+  let bulletYAngle = useRef(0)
+  let bulletZAngle = useRef(80)
   let redColorSpeed = 1/200
   let laserRef = useRef();
   let laserStartButton = useRef(false)
   let rotateStartButton = useRef(false)
+  let startFollow = useRef(false);
+  let bulletRef = useRef(null)
   let _scale = 1;
   let rotationSpeed = 1/5
+  let uvAttribute,uvCopy
+
+  let shaderMat = new THREE.ShaderMaterial({vertexShader:laserVertex,fragmentShader:laserFrags,uniforms:{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
+  utexture:{value:walltxt}, intersectPoint:{value:new THREE.Vector3(0,0,0)}}});
+  
+
+
+  let wallMat = new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:frags,transparent:true,uniforms:{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
+  utexture:{value:walltxt},cursorVisible:{value:3.0} , uArray:{value:[5.0,0.0,20.0]},
+  mx:{value:0},my:{value:0},
+  prevUline:{value:new THREE.Vector2(0,0)},uline:{value:new THREE.Vector2(0,0)}}})
+
 
   // Points de la ligne
   const points = [
@@ -134,6 +153,8 @@ export function Model2(props) {
     }
   useEffect(()=>
     {
+      
+      
       appContext.RayCastController.current = (args)=>
       {
         
@@ -184,6 +205,7 @@ export function Model2(props) {
           {   
             laserButtonSetOnce()
             laserStartButton.current = true;
+            shootBullet.current = true;
           }
           else if(args == 'LASER-END')
           { 
@@ -211,9 +233,38 @@ export function Model2(props) {
     }
 
   }
+  let followUline = (from,to) =>
+    {
+      // wallRef.current.material.uniforms.prevUline.value,new THREE.Vector2(intersect[0].uv.x,intersect[0].uv.y)
+      let xVal,yVal;
+      if(from.x > to.x)
+      {
+        xVal = from.x - 0.1/30;
+      }
+      else
+      {
+        xVal = from.x + 0.1/30;
+      }
+      if(from.y > to.y)
+      {
+        yVal = from.y - 0.1/30;
+      }
+      else
+      {
+        yVal = from.y + 0.1/30;
+      }
+      wallRef.current.material.uniforms.prevUline.value.x = xVal
+      wallRef.current.material.uniforms.prevUline.value.y = yVal
+      
+      // return new THREE.Vector2(xVal,yVal);
+    }
   useFrame(()=>
     {
+      followUline(wallRef.current.material.uniforms.prevUline.value,new THREE.Vector2(wallRef.current.material.uniforms.uline.value.x,wallRef.current.material.uniforms.uline.value.y));
 
+      
+      laserRef.current.material.uniforms.utime.value += 0.05;
+      wallRef.current.material.uniforms.utime.value += 0.05;
             if(laserStartButton.current)
             {
                 if(laserTarget.current.name != 'none')
@@ -258,13 +309,21 @@ export function Model2(props) {
 
               }
               
-            laserRef.current.material.uniforms.utime.value += 0.05;
+            
             if(shootBullet.current)
               { 
 
-              cilRef3.current.position.x += Math.floor((0.01*xAngle.current) * 100) /100
-              cilRef3.current.position.z += Math.floor((0.01*zAngle.current) * 100) /100
-              cilRef3.current.position.y += Math.floor((0.01*yAngle.current) * 100) /100
+                  // bulletRef.current.position.x += Math.floor((0.01*bulletXAngle.current) * 100) /100
+                  bulletRef.current.position.z += Math.floor((0.01*bulletZAngle.current) * 100) /100
+                  // bulletRef.current.position.y += Math.floor((0.01*bulletYAngle.current) * 100) /100
+              
+                  if(bulletRef.current.position.z>= 30)
+                  { console.log('reset')
+                    shootBullet.current = false;
+                    bulletRef.current.position.x = 0
+                    bulletRef.current.position.z = 0
+                    bulletRef.current.position.y = 0
+                  }
               }
               if(horizontalRotationPositive.current)
               {
@@ -280,7 +339,7 @@ export function Model2(props) {
 
 
                   cilRef2.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
-                  cilRef3.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
+                  // bulletRef.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
                   ghorizontalGearRef.current.rotation.y -= 0.01
 
                   rayDirection.current.z = (zAngle.current/wallRef.current.position.x);
@@ -307,7 +366,7 @@ export function Model2(props) {
                     zAngle.current = Math.round(zAngle.current *100)/100;
                     
                     cilRef2.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
-                    cilRef3.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
+                    // bulletRef.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
                     ghorizontalGearRef.current.rotation.y += 0.01
                     rayDirection.current.z = (zAngle.current/wallRef.current.position.x);
                     rayDirection.current.z = Math.round(rayDirection.current.z *100)/100
@@ -332,7 +391,7 @@ export function Model2(props) {
                       yAngle.current = Math.round(yAngle.current *100)/100
     
                       cilRef2.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
-                      cilRef3.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
+                      // bulletRef.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
 
                       rayDirection.current.y = (yAngle.current/wallRef.current.position.x);
                       rayDirection.current.y = Math.round(rayDirection.current.y *100)/100
@@ -358,7 +417,7 @@ export function Model2(props) {
 
       
                         cilRef2.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
-                        cilRef3.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
+                        // bulletRef.current.lookAt(new THREE.Vector3(25,yAngle.current,15+zAngle.current))
 
                         rayDirection.current.y = (yAngle.current/wallRef.current.position.x);
                         rayDirection.current.y = Math.round(rayDirection.current.y *100)/100
@@ -376,12 +435,20 @@ export function Model2(props) {
       if(!setOnce.current)
       {
         setOnce.current = true;
-
+        const uvCount = wallRef.current.geometry.attributes.uv;
+        uvCopy = new Float32Array(uvCount.count * uvCount.itemSize);
+        for (let i = 0; i < uvCount.count; i++) 
+          { uvCopy[i * 2] = uvCount.getX(i); 
+            uvCopy[i * 2 + 1] = uvCount.getY(i); 
+          }
+        // console.log(uvCopy)
         let intersect = rayCaster.intersectObject(wallRef.current)
         if(intersect.length>0)
         {
           
           wallRef.current.material.uniforms.uline.value = new THREE.Vector2(intersect[0].uv.x,intersect[0].uv.y)
+          wallRef.current.material.uniforms.prevUline.value = new THREE.Vector2(intersect[0].uv.x,intersect[0].uv.y);
+          
           laserRef.current.material.uniforms.intersectPoint.value = new THREE.Vector3(intersect[0].point.x,intersect[0].point.y,intersect[0].distance)
         }
       }
@@ -399,6 +466,12 @@ export function Model2(props) {
         
         if(intersect[0].object.name == 'wall')
         {
+              // console.log(intersect[0])
+              // for (let i = 0; i < uvCopy.length / 2; i++) 
+              //   { const u = uvCopy[i * 2]; const v = uvCopy[i * 2 + 1]; 
+              //     if (Math.abs(u - intersect[0].uv.x) < 0.01 && Math.abs(v - intersect[0].uv.y) < 0.01) 
+              //       { console.log(`UV trouvées dans la copie : index ${i}`); break; } }
+              
               heatAnimation.current = false;
               if(laserTarget.current.index != null)
               {
@@ -409,8 +482,9 @@ export function Model2(props) {
               laserTarget.current.name = 'none'
               laserTarget.current.index = null
               
-              wallRef.current.material.uniforms.cursorVisible.value = 15.0
-              wallRef.current.material.uniforms.uline.value = new THREE.Vector2(intersect[0].uv.x,intersect[0].uv.y)
+              wallRef.current.material.uniforms.cursorVisible.value = 3.0;
+              startFollow.current = true;
+              wallRef.current.material.uniforms.uline.value = new THREE.Vector2(intersect[0].uv.x,intersect[0].uv.y);
               laserRef.current.material.uniforms.intersectPoint.value = new THREE.Vector3(intersect[0].point.x,intersect[0].point.y,intersect[0].distance)
 
         }
@@ -448,65 +522,60 @@ export function Model2(props) {
             if(!setOnce3.current)
             {
               setOnce3.current = true
-              cilRef3.current.lookAt(new THREE.Vector3(25,0,15))
+              bulletRef.current.lookAt(new THREE.Vector3(25,0,15))
             }
             
           }
-  useEffect(()=>{
-                // laserRef.current.geometry.attributes.position.array[0] = 5 
-                // laserRef.current.geometry.attributes.position.array[1] = 5 
-                // laserRef.current.geometry.attributes.position.needsUpdate = true
-                },[])
+  let mouseRayMove = (evt)=>
+    {
+      wallRef.current.material.uniforms.mx.value = evt.point.x,wallRef.current.material.uniforms.my.value = evt.point.y
+    }
+  let mouseRayExit = (evt)=>
+    {
+      wallRef.current.material.uniforms.mx.value = 0,wallRef.current.material.uniforms.my.value = 0
+    }
   return (
     <>
 
  
-    {/* <mesh  ref={cilRef2} onAfterRender={clirefFunc2} geometry={nodes.laserBase.geometry}  position={[0,0,15]}>
-        <meshMatcapMaterial color={'blue'}/>  
-        <mesh name='laserFire' ref={laserRef} geometry={nodes.laser2.geometry} material={nodes.laser.material}>
-            <shaderMaterial visible={false} transparent vertexShader={laserVertex} fragmentShader={laserFrags} uniforms={{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
-            utexture:{value:txt}, intersectPoint:{value:new THREE.Vector3(0,0,0)} }} />
-        </mesh>
-        <mesh geometry={nodes.gear1.geometry} material={nodes.gear1.material} position={[1.5, 0, 1.5]} rotation={[0,0, (0*Math.PI)/180]}>
-            <meshMatcapMaterial color={"red"} />
-        </mesh>
-    </mesh>
-    <mesh geometry={nodes.gear2.geometry} material={nodes.gear2.material} position={[1, -5, 16.2]} rotation={[0,(109*Math.PI)/180,0]}>
-        <meshMatcapMaterial color={"red"} />
-        <mesh geometry={nodes.gear2socle.geometry} material={nodes.gear2socle.material} position={[0.001, 3.383, -0.045]} rotation={[0, -0.293, 0]}>
-        <meshMatcapMaterial color={"gray"} />
-        </mesh>
-    </mesh> */}
         <mesh ref={ghorizontalGearRef} geometry={nodes.gear2.geometry} material={nodes.gear2.material} position={[0, -3, 16.4]} rotation={[0, (110*Math.PI)/180, 0]}>
-          <meshMatcapMaterial color={"red"} />
-          <mesh geometry={nodes.gear2socle.geometry} material={nodes.gear2socle.material} position={[0.001, 3.383, -0.045]} rotation={[0, -0.293, 0]}>
-          <meshMatcapMaterial color={"white"} />
+          <meshMatcapMaterial map={laser1Txt} />
+          <mesh geometry={nodes.gear2socle.geometry} position={[0.001, 3.383, -0.045]} rotation={[0, -0.293, 0]}>
+          <meshMatcapMaterial map={laser1Txt} />
           </mesh>
         </mesh>
         
-        <mesh ref={cilRef2} onAfterRender={clirefFunc2} geometry={nodes.laserBase.geometry} material={nodes.laserBase.material} position={[0, 2, 15]} rotation={[0, -0.293, 0]}>
-              <meshMatcapMaterial color={"blue"} />
+        <mesh ref={cilRef2} onAfterRender={clirefFunc2} geometry={nodes.laserBase.geometry} position={[0, 2, 15]} rotation={[0, -0.293, 0]}>
+              <meshBasicMaterial map={laser1Txt} />
               <mesh geometry={nodes.gear1.geometry} material={nodes.gear1.material} position={[1.581, 0.055, -0.011]} rotation={[Math.PI / 2, 0, 0]}>
-                    <meshMatcapMaterial color={"red"} />
+                    <meshBasicMaterial map={laser1Txt} />
               </mesh>
               <mesh visible={false} geometry={nodes.laser.geometry} material={nodes.laser.material} position={[0, 0, 2.594]} />
-              <mesh name='laserFire' ref={laserRef} geometry={nodes.laser2.geometry} material={nodes.laser2.material} position={[0, 0, 2.594]}>
-                      <shaderMaterial visible={false} transparent vertexShader={laserVertex} fragmentShader={laserFrags} uniforms={{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
-                    utexture:{value:txt}, intersectPoint:{value:new THREE.Vector3(0,0,0)} }} />
+              <mesh name='laserFire' ref={laserRef} geometry={nodes.laser2.geometry} material={shaderMat} position={[0, 0, 2.594]}>
+                        {/* <mesh ref={bulletRef} position={[0,0,0]}>
+                          <sphereGeometry args={[0.5,20,20]} />
+                          <meshBasicMaterial color={'white'} />
+                        </mesh> */}
+                        <mesh ref={bulletRef} geometry={nodes.missilBullet.geometry}>
+                          
+                          <meshBasicMaterial color={'white'} />
+                        </mesh>
               </mesh>
         </mesh>
+        
+        <mesh geometry={nodes.socle1.geometry} position={[0,-5,16]} rotation={[0, 0, 0]}>
+          <meshMatcapMaterial map={laser1Txt} />
+        </mesh>
     
-    <mesh ref={cilRef3} onAfterRender={clirefFunc3} scale={1} geometry={nodes.testc4.geometry}  position={[0,0,15]} >
+    <mesh ref={cilRef3} visible={false} onAfterRender={clirefFunc3} scale={1} geometry={nodes.testc4.geometry}  position={[0,0,15]} >
         <meshBasicMaterial color={'red'} wireframe />
         <sprite ref={sprite0Ref} scale={_scale} position={[0,0,-0.5]}>
         <spriteMaterial color={'white'} transparent opacity={0.2} />
         </sprite>
 
     </mesh>
-    <mesh name='wall' onAfterRender={setRay} ref={wallRef}  geometry={nodes.wall.geometry} rotation={[0, 0,(90 * Math.PI) / 180]} position={[25, 0, 15]}>
-            <shaderMaterial transparent vertexShader={vertex} fragmentShader={frags} uniforms={{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
-                                                                                utexture:{value:txt},cursorVisible:{value:15.0} ,uline:{value:new THREE.Vector2(0,0)} }} />
-    </mesh>
+    <mesh name='wall' onPointerLeave={mouseRayExit} onPointerMove={mouseRayMove} onAfterRender={setRay} ref={wallRef} material={wallMat}  geometry={nodes.wall.geometry} rotation={[0, 0,(90 * Math.PI) / 180]} position={[25, 0, 15]} />
+
     <group ref={resGroup}>
             <mesh name='parentMinerais'   position={[25,5,5]}>
                   <boxGeometry args={[2,2,2]} />

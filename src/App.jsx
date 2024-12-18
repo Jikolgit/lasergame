@@ -6,13 +6,13 @@ import { GameButton } from '../components/GameUI'
 
 export const AppContext = createContext()
 function App() {
-
+  const showTouchPad = useRef(false);
   const GameButtonController = useRef(null)
   const ModelController = useRef(null);
   const RayCastController = useRef(null);
   return (
     <>
-        <AppContext.Provider value={{GameButtonController,ModelController,RayCastController}}>
+        <AppContext.Provider value={{GameButtonController,ModelController,RayCastController,showTouchPad}}>
               <div 
                   
                   className={`bg-black font-times absolute max-w-[700px] left-[0] right-[0] mx-auto  w-full font-times

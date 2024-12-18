@@ -11,6 +11,8 @@ export function GameButton()
         },[])
     return(
             <>
+                {appContext.showTouchPad.current &&
+                <> 
                 <div className="z-[2] w-[35px] h-[35px] absolute left-0 right-0 mx-auto bottom-[120px]
                                 flex justify-between ">
                         <div
@@ -42,6 +44,8 @@ export function GameButton()
                         
                         className="w-full h-full bg-white"></div>
                 </div>
+                </>
+                }
 
             </>
     )
