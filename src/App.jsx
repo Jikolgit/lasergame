@@ -6,7 +6,7 @@ import { GameButton } from '../components/GameUI'
 
 export const AppContext = createContext()
 function App() {
-  const showTouchPad = useRef(false);
+  const showTouchPad = useRef(true);
   const GameButtonController = useRef(null)
   const ModelController = useRef(null);
   const RayCastController = useRef(null);
