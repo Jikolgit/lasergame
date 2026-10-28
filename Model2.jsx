@@ -13,6 +13,7 @@ import frags from './components/frags.glsl'
 import laserVertex from './components/laserShaders/laserVertex.glsl'
 import laserFrags from './components/laserShaders/laserFrags.glsl'
 import { AudioManage } from './components/audioComponents';
+import { BurnTrail } from './components/burnTrail';
 
 export function Model2(props) {
   const appContext = useContext(AppContext);
@@ -28,6 +29,8 @@ export function Model2(props) {
   rayCaster.set(rayPosition.current,rayDirection.current)
 
   let walltxt = useTexture('ntxt4.jpg')
+  let burnTrail = useRef(null)
+  if(!burnTrail.current) burnTrail.current = new BurnTrail()
   let verticalRotationPositive = useRef(false)
   let horizontalRotationPositive = useRef(false)
   let verticalRotationNegative = useRef(false)
@@ -72,7 +75,7 @@ export function Model2(props) {
 
 
   let wallMat = new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:frags,transparent:true,uniforms:{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
-  utexture:{value:walltxt},cursorVisible:{value:3.0} , uArray:{value:[5.0,0.0,20.0]},
+  utexture:{value:walltxt},uBurn:{value:burnTrail.current.texture},cursorVisible:{value:3.0} , uArray:{value:[5.0,0.0,20.0]},
   mx:{value:0},my:{value:0},
   prevUline:{value:new THREE.Vector2(0,0)},uline:{value:new THREE.Vector2(0,0)}}})
 
@@ -283,6 +286,17 @@ export function Model2(props) {
                 laserRef.current.material.visible = false;
                 laserShotStart.current= false
             }
+
+            // trace de brûlure laissée par le laser sur le mur
+            if(laserShotStart.current && laserTarget.current.name == 'none')
+            {
+              burnTrail.current.burn(wallRef.current.material.uniforms.uline.value)
+            }
+            else
+            {
+              burnTrail.current.stop()
+            }
+            burnTrail.current.update()
 
               for(let i = 0; i<totalResOnMap.current.length;i++)
               { 

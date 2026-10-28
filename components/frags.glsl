@@ -8,6 +8,7 @@
     uniform float my;
     uniform vec3 intersectPoint;
     uniform sampler2D utexture;
+    uniform sampler2D uBurn;
     varying vec2 vcustomUV;
     varying vec2 vUv;
 
@@ -34,6 +35,16 @@
 
         return returnedValue;
       }
+      // chaleur (0..1) -> couleur de la brûlure : rouge sombre, rouge vif, puis blanc-jaune au coeur
+      vec3 burnColor(float heat)
+      {
+        vec3 cold = vec3(0.35,0.0,0.02);
+        vec3 red = vec3(1.0,0.08,0.05);
+        vec3 hot = vec3(1.0,0.9,0.7);
+        vec3 col = mix(cold,red,smoothstep(0.05,0.45,heat));
+        col = mix(col,hot,smoothstep(0.7,1.0,heat));
+        return col;
+      }
       void main() {
         float width = 0.1/7.0;
         float cols = vUv.x + sin( utime);
@@ -52,7 +63,15 @@
         // }
 
         vec3 finalstr = strgt2;
-        gl_FragColor = vec4(mixedColor.x*finalstr.x,mixedColor.y*finalstr.y,mixedColor.z*finalstr.z,strgt);
+        vec3 wallColor = mixedColor.xyz*finalstr;
+
+        // le refroidissement du canvas (8 bits) laisse un résidu d'alpha très faible : on l'ignore
+        float heat = clamp((texture2D(uBurn, vUv).a - 0.06)/0.94, 0.0, 1.0);
+        float burnMask = smoothstep(0.03,0.25,heat);
+        wallColor = mix(wallColor,burnColor(heat),burnMask);
+        wallColor += vec3(1.0,0.15,0.05)*heat*0.6;
+
+        gl_FragColor = vec4(wallColor,strgt);
         // gl_FragColor = vec4(cols,cols,cols,1.0);
 
 
