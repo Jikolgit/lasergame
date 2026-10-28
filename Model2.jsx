@@ -14,6 +14,9 @@ import laserVertex from './components/laserShaders/laserVertex.glsl'
 import laserFrags from './components/laserShaders/laserFrags.glsl'
 import { AudioManage } from './components/audioComponents';
 import { BurnTrail } from './components/burnTrail';
+import burnChunk from './components/burnChunk.glsl'
+import sphereVertex from './components/sphereShaders/sphereVertex.glsl'
+import sphereFrags from './components/sphereShaders/sphereFrags.glsl'
 
 export function Model2(props) {
   const appContext = useContext(AppContext);
@@ -31,6 +34,11 @@ export function Model2(props) {
   let walltxt = useTexture('ntxt4.jpg')
   let burnTrail = useRef(null)
   if(!burnTrail.current) burnTrail.current = new BurnTrail()
+  let sphereBurnTrail = useRef(null)
+  if(!sphereBurnTrail.current) sphereBurnTrail.current = new BurnTrail(1024,0.04)
+  let sphereRef = useRef(null)
+  let sphereUv = useRef(new THREE.Vector2(0,0))
+  let laserHit = useRef('wall') // surface touchée par le laser : 'wall', 'sphere' ou 'minerais'
   let verticalRotationPositive = useRef(false)
   let horizontalRotationPositive = useRef(false)
   let verticalRotationNegative = useRef(false)
@@ -74,10 +82,16 @@ export function Model2(props) {
   
 
 
-  let wallMat = new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:frags,transparent:true,uniforms:{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
+  let wallMat = new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:burnChunk+frags,transparent:true,uniforms:{utime:{value:1.0},uColor:{value:new THREE.Vector3(0,0,1.0)},
   utexture:{value:walltxt},uBurn:{value:burnTrail.current.texture},cursorVisible:{value:3.0} , uArray:{value:[5.0,0.0,20.0]},
   mx:{value:0},my:{value:0},
   prevUline:{value:new THREE.Vector2(0,0)},uline:{value:new THREE.Vector2(0,0)}}})
+
+  let sphereMat = new THREE.ShaderMaterial({vertexShader:sphereVertex,fragmentShader:burnChunk+sphereFrags,uniforms:{
+  uColor:{value:new THREE.Vector3(0.75,0.78,0.85)},uBurn:{value:sphereBurnTrail.current.texture}}})
+  // les UV d'une sphère se resserrent horizontalement vers les pôles :
+  // on étire les impacts en conséquence pour qu'ils restent ronds
+  let sphereBurnStretch = (v)=> 1/(2*Math.max(Math.sin(Math.PI*v),0.1))
 
 
   // Points de la ligne
@@ -287,8 +301,8 @@ export function Model2(props) {
                 laserShotStart.current= false
             }
 
-            // trace de brûlure laissée par le laser sur le mur
-            if(laserShotStart.current && laserTarget.current.name == 'none')
+            // trace de brûlure laissée par le laser sur le mur ou la sphère
+            if(laserShotStart.current && laserHit.current == 'wall')
             {
               burnTrail.current.burn(wallRef.current.material.uniforms.uline.value)
             }
@@ -296,7 +310,16 @@ export function Model2(props) {
             {
               burnTrail.current.stop()
             }
+            if(laserShotStart.current && laserHit.current == 'sphere')
+            {
+              sphereBurnTrail.current.burn(sphereUv.current,sphereBurnStretch)
+            }
+            else
+            {
+              sphereBurnTrail.current.stop()
+            }
             burnTrail.current.update()
+            sphereBurnTrail.current.update()
 
               for(let i = 0; i<totalResOnMap.current.length;i++)
               { 
@@ -472,13 +495,13 @@ export function Model2(props) {
     {
       let array1 = [wallRef.current]
       
-      let array2 = array1.concat(resRefArr.current)
+      let array2 = array1.concat(resRefArr.current,[sphereRef.current])
       let intersect = rayCaster.intersectObjects(array2)
       
       if(intersect.length>0)
       {
         
-        if(intersect[0].object.name == 'wall')
+        if(intersect[0].object.name == 'wall' || intersect[0].object.name == 'sphere')
         {
               // console.log(intersect[0])
               // for (let i = 0; i < uvCopy.length / 2; i++) 
@@ -496,9 +519,19 @@ export function Model2(props) {
               laserTarget.current.name = 'none'
               laserTarget.current.index = null
               
-              wallRef.current.material.uniforms.cursorVisible.value = 3.0;
-              startFollow.current = true;
-              wallRef.current.material.uniforms.uline.value = new THREE.Vector2(intersect[0].uv.x,intersect[0].uv.y);
+              if(intersect[0].object.name == 'sphere')
+              {
+                laserHit.current = 'sphere'
+                sphereUv.current.set(intersect[0].uv.x,intersect[0].uv.y)
+                wallRef.current.material.uniforms.cursorVisible.value = 1.0;
+              }
+              else
+              {
+                laserHit.current = 'wall'
+                wallRef.current.material.uniforms.cursorVisible.value = 3.0;
+                startFollow.current = true;
+                wallRef.current.material.uniforms.uline.value = new THREE.Vector2(intersect[0].uv.x,intersect[0].uv.y);
+              }
               laserRef.current.material.uniforms.intersectPoint.value = new THREE.Vector3(intersect[0].point.x,intersect[0].point.y,intersect[0].distance)
 
         }
@@ -510,6 +543,7 @@ export function Model2(props) {
             { 
               laserTarget.current.name = totalResOnMap.current[i].name
               laserTarget.current.index = i
+              laserHit.current = 'minerais'
               resRefArr.current[i].parent.material.color = new THREE.Color(0,0,1);
               wallRef.current.material.uniforms.cursorVisible.value = 1.0
               laserRef.current.material.uniforms.intersectPoint.value = new THREE.Vector3(intersect[0].point.x,intersect[0].point.y,intersect[0].distance);
@@ -590,6 +624,9 @@ export function Model2(props) {
     </mesh>
     <mesh name='wall' onPointerLeave={mouseRayExit} onPointerMove={mouseRayMove} onAfterRender={setRay} ref={wallRef} material={wallMat}  geometry={nodes.wall.geometry} rotation={[0, 0,(90 * Math.PI) / 180]} position={[25, 0, 15]} />
 
+    <mesh name='sphere' ref={sphereRef} material={sphereMat} position={[18,6.5,19.5]}>
+          <sphereGeometry args={[2.3,64,32]} />
+    </mesh>
     <group ref={resGroup}>
             <mesh name='parentMinerais'   position={[25,5,5]}>
                   <boxGeometry args={[2,2,2]} />
